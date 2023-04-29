@@ -3,24 +3,28 @@
 
 
 // drive motors
-pros::Motor lF(-3, pros::E_MOTOR_GEARSET_06); // left front motor. port 3, reversed
+pros::Motor lF(-2, pros::E_MOTOR_GEARSET_06); // left front motor. port 3, reversed
 pros::Motor lM(-14, pros::E_MOTOR_GEARSET_06); // left middle motor. port 14, reversed
-pros::Motor lB(-12, pros::E_MOTOR_GEARSET_06); // left back motor. port 12, reversed
-pros::Motor rF(19, pros::E_MOTOR_GEARSET_06); // right front motor. port 19
+pros::Motor lB(-20, pros::E_MOTOR_GEARSET_06); // left back motor. port 12, reversed
+pros::Motor rF(1, pros::E_MOTOR_GEARSET_06); // right front motor. port 19
 pros::Motor rM(20, pros::E_MOTOR_GEARSET_06); // right middle motor. port 20
-pros::Motor rB(1, pros::E_MOTOR_GEARSET_06); // right back motor. port 1
+pros::Motor rB(11, pros::E_MOTOR_GEARSET_06); // right back motor. port 1
 
 // motor groups
-pros::MotorGroup leftMotors({lF, lM, lB}); // left motor group
-pros::MotorGroup rightMotors({rF, rM, rB}); // right motor group
+pros::MotorGroup leftMotors({lF,  lB}); // left motor group
+pros::MotorGroup rightMotors({rF, rB}); // right motor group
 
 // Inertial Sensor on port 6
-pros::Imu imu(6);
+pros::Imu imu(10);
 
 // tracking wheels
-pros::ADIEncoder verticalEnc('A', 'B', false);
+pros::ADIEncoder verticalEnc('G', 'H', false);
+pros::ADIEncoder leftEnc('E', 'F', true);
+pros::ADIEncoder rightEnc('C', 'D', false);
 // vertical tracking wheel. 2.75" diameter, 2.2" offset
-lemlib::TrackingWheel vertical(&verticalEnc, 2.75, 0);
+lemlib::TrackingWheel vertical(&verticalEnc, 2.75, 4.6);
+lemlib::TrackingWheel left(&leftEnc, 2.75, 2.3);
+lemlib::TrackingWheel right(&rightEnc, 2.75, 2.3);
 
 
 // drivetrain
@@ -56,9 +60,9 @@ lemlib::ChassisController_t angularController {
 
 // sensors for odometry
 lemlib::OdomSensors_t sensors {
-	nullptr,
-	nullptr,
-	nullptr,
+	&left,
+	&right,
+	&vertical,
 	nullptr,
 	&imu
 };
@@ -118,7 +122,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	chassis.moveTo(20, 0, 4000);
+	chassis.follow("path.txt", 2000, 15);
 }
 
 
