@@ -35,6 +35,9 @@
 #define PROS_USE_LITERALS
 
 #include "api.h"
+#include "config.hpp"
+#include "triballcontrol.hpp"
+#include "autons.hpp"
 
 /**
  * You should add more #includes here
@@ -75,7 +78,8 @@ void opcontrol(void);
 /**
  * You can add C++-only headers here
  */
-//#include <iostream>
+// #include <iostream>
+#define ASYNC(func) pros::Task {[=] { func; }};
 #endif
 
-#endif  // _PROS_MAIN_H_
+#endif // _PROS_MAIN_H_
