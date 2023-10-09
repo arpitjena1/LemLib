@@ -259,6 +259,8 @@ void lemlib::Chassis::swingTo(double angle, double leftScaler, double rightScale
         lemlib::Chassis::tank(leftspeed, rightspeed);
         pros::delay(10);
     } while(pros::competition::get_status() == compState && !pid.settled());
+    drivetrain.leftMotors->move(0);
+    drivetrain.rightMotors->move(0);
     mutex.give();
 }
 
@@ -289,7 +291,10 @@ void lemlib::Chassis::turnAngle(double angle, double speed, double timeout, bool
         lemlib::Chassis::arcade(0, (stepVal/100)*127);
         pros::delay(10);
     } while(pros::competition::get_status() == compState && !pid.settled());
+    drivetrain.leftMotors->move(0);
+    drivetrain.rightMotors->move(0);
     mutex.give();
+    
 }
 /**
  * @brief Move the chassis towards the target pose
