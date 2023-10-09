@@ -18,7 +18,7 @@
 #include "lemlib/asset.hpp"
 #include "lemlib/chassis/trackingWheel.hpp"
 #include "lemlib/pose.hpp"
-
+#include "math.h"
 namespace lemlib {
 /**
  * @brief Struct containing all the sensors used for odometry
@@ -251,6 +251,10 @@ class Chassis {
          * @param curveGain control how steep the drive curve is. The larger the number, the steeper the curve. A value
          * of 0 disables the curve entirely.
          */
+        void moveToC(float x, float y, float theta, float exitErrorPerPoint, int timeout, bool async, bool forwards, float chasePower,
+                             float lead, float maxSpeed, bool isLastPose, bool log);
+        void cMtp(std::vector<Pose> poses, double exitErrorPerPoint, double timeoutPerPoint,bool async);
+
         void tank(int left, int right, float curveGain = 0.0);
         /**
          * @brief Control the robot during the driver using the arcade drive control scheme. In this control scheme one

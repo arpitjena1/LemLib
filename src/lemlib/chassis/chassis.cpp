@@ -412,3 +412,188 @@ void lemlib::Chassis::moveTo(float x, float y, float theta, int timeout, bool as
     // give the mutex back
     mutex.give();
 }
+void lemlib::Chassis::moveToC(float x, float y, float theta, float exitErrorPerPoint, int timeout, bool async, bool forwards, float chasePower,
+                             float lead, float maxSpeed, bool islastPose, bool log){
+    if (!mutex.take(10)) return;
+    // if the function is async, run it in a new task
+    if (async) {
+        pros::Task task([&]() { moveTo(x, y, theta, timeout, false, forwards, chasePower, lead, maxSpeed, log); });
+        mutex.give();
+        pros::delay(10); // delay to give the task time to start
+        return;
+    }
+
+    Pose target(x, y, M_PI_2 - degToRad(theta)); // target pose in standard form
+    Pose lastPose = getPose(); // last pose
+    //pid
+    FAPID linearPID = FAPID(0, 0, lateralSettings.kP, 0, lateralSettings.kD, "linearPID");
+    FAPID angularPID = FAPID(0, 0, angularSettings.kP, 0, angularSettings.kD, "angularPID");
+    
+    float prevLinearPower = 0; // previous linear power
+    int compState = pros::competition::get_status();
+    int start = pros::millis();
+    distTravelled = 0;
+
+    if (!forwards) target.theta = fmod(target.theta + M_PI, 2 * M_PI); // backwards movement
+
+    bool close = false; // used for settling
+    if (chasePower == 0) chasePower = drivetrain.chasePower; // use global chase power if chase power is 0
+
+    // main loop
+    //removed settling for the code
+    if(islastPose){
+        //set pid for last pose
+        linearPID.setExit(lateralSettings.largeError, lateralSettings.smallError, lateralSettings.smallErrorTimeout,
+                      lateralSettings.smallErrorTimeout, timeout); // exit conditions
+        while (pros::competition::get_status() == compState && (!linearPID.settled() || pros::millis() - start < 300)) {
+        // get current pose
+        Pose pose = getPose(true);
+        if (!forwards) pose.theta += M_PI;
+        pose.theta = M_PI_2 - pose.theta; // convert to standard form
+
+        // update completion vars
+        distTravelled += pose.distance(lastPose);
+        lastPose = pose;
+
+        // check if the robot is close enough to the target to start settling
+        if (pose.distance(target) < 7.5 && close == false) {
+            close = true;
+            maxSpeed = fmax(fabs(prevLinearPower), 30);
+        }
+
+        // calculate the carrot point
+        Pose carrot = target - (Pose(cos(target.theta), sin(target.theta)) * lead * pose.distance(target));
+        if (close) carrot = target; // settling behavior
+
+        // calculate error
+        float angularError = angleError(pose.angle(carrot), pose.theta, true); // angular error
+        float linearError = pose.distance(carrot) * cos(angularError); // linear error
+        if (close) angularError = angleError(target.theta, pose.theta, true); // settling behavior
+        if (!forwards) linearError = -linearError;
+
+        // get PID outputs
+        float angularPower = -angularPID.update(radToDeg(angularError), 0, log);
+        float linearPower = linearPID.update(linearError, 0, log);
+
+        // calculate radius of turn
+        float curvature = fabs(getCurvature(pose, carrot));
+        if (curvature == 0) curvature = -1;
+        float radius = 1 / curvature;
+
+        // calculate the maximum speed at which the robot can turn
+        // using the formula v = sqrt( u * r * g )
+        if (radius != -1) {
+            float maxTurnSpeed = sqrt(chasePower * radius * 9.8);
+            // the new linear power is the minimum of the linear power and the max turn speed
+            if (linearPower > maxTurnSpeed && !close) linearPower = maxTurnSpeed;
+            else if (linearPower < -maxTurnSpeed && !close) linearPower = -maxTurnSpeed;
+        }
+
+        // prioritize turning over moving
+        float overturn = fabs(angularPower) + fabs(linearPower) - maxSpeed;
+        if (overturn > 0) linearPower -= linearPower > 0 ? overturn : -overturn;
+        prevLinearPower = linearPower;
+
+        // calculate motor powers
+        float leftPower = linearPower + angularPower;
+        float rightPower = linearPower - angularPower;
+
+        // move the motors
+        drivetrain.leftMotors->move(leftPower);
+        drivetrain.rightMotors->move(rightPower);
+
+        pros::delay(10); // delay to save resources
+    }
+    } else{
+        
+        while (pros::competition::get_status() == compState && (pros::millis() - start < 300)) {
+        // get current pose
+        Pose pose = getPose(true);
+        if (!forwards) pose.theta += M_PI;
+        pose.theta = M_PI_2 - pose.theta; // convert to standard form
+
+        // update completion vars
+        distTravelled += pose.distance(lastPose);
+        lastPose = pose;
+
+        // check if the robot is close enough to the target to start settling
+        if (pose.distance(target) < 7.5 && close == false) {
+            close = true;
+            maxSpeed = fmax(fabs(prevLinearPower), 30);
+        }
+
+        // calculate the carrot point
+        Pose carrot = target - (Pose(cos(target.theta), sin(target.theta)) * lead * pose.distance(target));
+        if (close) carrot = target; // settling behavior
+
+        // calculate error
+        float angularError = angleError(pose.angle(carrot), pose.theta, true); // angular error
+        float linearError = pose.distance(carrot) * cos(angularError); // linear error
+        if (close) angularError = angleError(target.theta, pose.theta, true); // settling behavior
+        if (!forwards) linearError = -linearError;
+
+        // get PID outputs
+        float angularPower = -angularPID.update(radToDeg(angularError), 0, log);
+        float linearPower = linearPID.update(linearError, 0, log);
+
+        // calculate radius of turn
+        float curvature = fabs(getCurvature(pose, carrot));
+        if (curvature == 0) curvature = -1;
+        float radius = 1 / curvature;
+
+        // calculate the maximum speed at which the robot can turn
+        // using the formula v = sqrt( u * r * g )
+        if (radius != -1) {
+            float maxTurnSpeed = sqrt(chasePower * radius * 9.8);
+            // the new linear power is the minimum of the linear power and the max turn speed
+            if (linearPower > maxTurnSpeed && !close) linearPower = maxTurnSpeed;
+            else if (linearPower < -maxTurnSpeed && !close) linearPower = -maxTurnSpeed;
+        }
+
+        // prioritize turning over moving
+        float overturn = fabs(angularPower) + fabs(linearPower) - maxSpeed;
+        if (overturn > 0) linearPower -= linearPower > 0 ? overturn : -overturn;
+        prevLinearPower = linearPower;
+
+        // calculate motor powers
+        float leftPower = linearPower + angularPower;
+        float rightPower = linearPower - angularPower;
+
+        // move the motors
+        drivetrain.leftMotors->move(leftPower);
+        drivetrain.rightMotors->move(rightPower);
+
+        pros::delay(10); // delay to save resources
+    }
+    }
+    
+
+    // stop the drivetrain
+    drivetrain.leftMotors->move(0);
+    drivetrain.rightMotors->move(0);
+    // set distTraveled to -1 to indicate that the function has finished
+    distTravelled = -1;
+    // give the mutex back
+    mutex.give();
+
+}
+void lemlib::Chassis::cMtp(std::vector<Pose> poses, double exitErrorPerPoint, double timeoutPerPoint,bool async){
+    if (!mutex.take(10)) return;
+    // if the function is async, run it in a new task
+    if (async) {
+        pros::Task task([&]() { cMtp(poses, exitErrorPerPoint, timeoutPerPoint, true); });
+        mutex.give();
+        pros::delay(10); // delay to give the task time to start
+        return;
+    }
+    for(Pose p: poses){
+        //check for last point- settles
+        if(0){
+            moveToC(p.x, p.y, p.theta, exitErrorPerPoint, timeoutPerPoint, false, true, drivetrain.chasePower, 0.6, 127, true, true);
+        } else{
+            //for every other point- without settling
+            moveToC(p.x, p.y, p.theta, exitErrorPerPoint, timeoutPerPoint, false, true, drivetrain.chasePower, 0.6, 127, false, true);
+        }
+    }
+
+}
