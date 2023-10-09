@@ -197,6 +197,19 @@ class Chassis {
         void turnTo(float x, float y, int timeout, bool async = false, bool reversed = false, float maxSpeed = 127,
                     bool log = false);
         /**
+        * @brief Move the chassis towards the target pose
+        *
+        * Uses PID
+        * @param angle target angle
+        * @param leftScaler effect on left scale
+        * @param rightScaler
+        * @param timeout longest time the robot can spend moving
+        * @param async whether the function should be run asynchronously. false by default
+        * @param log whether the chassis should log the turnTo function. false by default
+        */
+        void swingTo(double angle, double leftScaler, double rightScaler , double timeout = 3000,bool async = false);
+        void turnAngle(double angle, double speed, double timeout = 3000, bool async = false);
+        /**
          * @brief Move the chassis towards the target pose
          *
          * Uses the boomerang controller

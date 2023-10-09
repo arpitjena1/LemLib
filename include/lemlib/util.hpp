@@ -91,4 +91,6 @@ float ema(float current, float previous, float smooth);
  * @return float curvature
  */
 float getCurvature(Pose pose, Pose other);
+
+float rescale180(double angle);
 } // namespace lemlib

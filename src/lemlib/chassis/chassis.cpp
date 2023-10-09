@@ -211,7 +211,86 @@ void lemlib::Chassis::turnTo(float x, float y, int timeout, bool async, bool rev
     // give the mutex back
     mutex.give();
 }
+/**
+ * @brief Move the chassis towards the target pose
+ *
+ * Uses PID
+ * @param angle target angle
+ * @param leftScaler effect on left scale
+ * @param rightScaler
+ * @param timeout longest time the robot can spend moving
+ * @param async whether the function should be run asynchronously. false by default
+ * @param log whether the chassis should log the turnTo function. false by default
+ */
+void lemlib::Chassis::swingTo(double angle, double leftScaler, double rightScaler, double timeout, bool async){
+    if (!mutex.take(10)) return;
+    // if the function is async, run it in a new task
+    if (async) {
+        pros::Task task([&]() { swingTo(angle, leftScaler, rightScaler,timeout, true) ;});
+        mutex.give();
+        pros::delay(10); // delay to give the task time to start
+        return;
+    }
+    std::uint8_t compState = pros::competition::get_status();
+    // create a new PID controller
+    FAPID pid = FAPID(0, 0, angularSettings.kP, 0, angularSettings.kD, "angularPID");
+    pid.setExit(angularSettings.largeError, angularSettings.smallError, angularSettings.largeErrorTimeout,
+                angularSettings.smallErrorTimeout, timeout);
 
+    //reset pid
+    pid.reset();
+    pid.update(0, 0);
+
+    float startTheta = getPose().theta;
+
+    //loop
+    do{
+        //update angle
+        double angleDiff = -rescale180(angle - startTheta);
+        double stepVal = pid.update(angleDiff, imu.get_heading());
+        if(stepVal > 1) stepVal = 1;
+        double left = stepVal * leftScaler;
+        double right = stepVal * rightScaler;
+        
+        //convert to percent
+        double leftspeed = (left/100)*127;
+        double rightspeed = (right/100)*127;
+        //execute
+        lemlib::Chassis::tank(leftspeed, rightspeed);
+        pros::delay(10);
+    } while(pros::competition::get_status() == compState && !pid.settled());
+    mutex.give();
+}
+
+void lemlib::Chassis::turnAngle(double angle, double speed, double timeout, bool async){
+    if (!mutex.take(10)) return;
+    // if the function is async, run it in a new task
+    if (async) {
+        pros::Task task([&]() { turnAngle(angle, speed, timeout,true);});
+        mutex.give();
+        pros::delay(10); // delay to give the task time to start
+        return;
+    }
+    std::uint8_t compState = pros::competition::get_status();
+    //create pid
+    FAPID pid = FAPID(0, 0, angularSettings.kP, 0, angularSettings.kD, "angularPID");
+    pid.setExit(angularSettings.largeError, angularSettings.smallError, angularSettings.largeErrorTimeout,
+                angularSettings.smallErrorTimeout, timeout);
+    
+    //reset pid
+    pid.reset();
+    pid.update(0,0);
+
+    float startTheta = getPose().theta;
+    //loop
+    do{
+        double angleDiff = -rescale180(angle - startTheta);
+        double stepVal = pid.update(angleDiff, imu.get_heading());
+        lemlib::Chassis::arcade(0, (stepVal/100)*127);
+        pros::delay(10);
+    } while(pros::competition::get_status() == compState && !pid.settled());
+    mutex.give();
+}
 /**
  * @brief Move the chassis towards the target pose
  *

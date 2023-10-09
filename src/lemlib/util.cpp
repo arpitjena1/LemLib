@@ -123,3 +123,7 @@ float lemlib::getCurvature(Pose pose, Pose other) {
     // return curvature
     return side * ((2 * x) / (d * d));
 }
+
+float lemlib::rescale180(double angle){
+    return angle - 360.0 * std::floor((angle + 180.0) * (1.0 / 360.0));
+}
