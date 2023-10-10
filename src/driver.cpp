@@ -92,7 +92,7 @@ void driver(){
                 //check if distance is in range of a triball, if it is use vis
                 if(inRange){
                     baseTurnBias = 0;
-			        baseForwardBias = 0;
+		    baseForwardBias = 0;
                 } else{
                     baseTurnBias = driverangle();
                 }
