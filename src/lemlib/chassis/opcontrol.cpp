@@ -31,8 +31,8 @@ float defaultDriveCurve(float input, float scale) {
  * curve, refer to the `defaultDriveCurve` documentation.
  */
 void Chassis::tank(int left, int right, float curveGain) {
-    drivetrain.leftMotors->move(driveCurve(left, curveGain));
-    drivetrain.rightMotors->move(driveCurve(right, curveGain));
+    drivetrain.leftMotors->move(left);
+    drivetrain.rightMotors->move(right);
 }
 
 /**
@@ -45,8 +45,8 @@ void Chassis::tank(int left, int right, float curveGain) {
  * curve, refer to the `defaultDriveCurve` documentation.
  */
 void Chassis::arcade(int throttle, int turn, float curveGain) {
-    int leftPower = driveCurve(throttle + turn, curveGain);
-    int rightPower = driveCurve(throttle - turn, curveGain);
+    int leftPower = throttle + turn;
+    int rightPower = throttle - turn;
     drivetrain.leftMotors->move(leftPower);
     drivetrain.rightMotors->move(rightPower);
 }
