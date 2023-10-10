@@ -246,7 +246,7 @@ void lemlib::Chassis::swingTo(double angle, double leftScaler, double rightScale
     //loop
     do{
 
-        double stepVal = pid.update(angle, imu.get_heading());
+        double stepVal = pid.update(-rescale180(angle), imu.get_heading());
         if(stepVal > 1) stepVal = 1;
         double left = stepVal * leftScaler;
         double right = stepVal * rightScaler;
@@ -283,7 +283,7 @@ void lemlib::Chassis::turnAngle(double angle, double speed, double timeout, bool
     //loop
     do{
         double angleDiff = -rescale180(angle - startTheta);
-        double stepVal = pid.update(angle, imu.get_heading());
+        double stepVal = pid.update(-rescale180(angle), imu.get_heading());
         lemlib::Chassis::arcade(0, stepVal);
         pros::delay(10);
     } while(pros::competition::get_status() == compState && !pid.settled());
