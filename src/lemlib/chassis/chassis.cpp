@@ -252,11 +252,8 @@ void lemlib::Chassis::swingTo(double angle, double leftScaler, double rightScale
         double left = stepVal * leftScaler;
         double right = stepVal * rightScaler;
         
-        //convert to percent
-        double leftspeed = (left/100)*127;
-        double rightspeed = (right/100)*127;
         //execute
-        lemlib::Chassis::tank(leftspeed, rightspeed);
+        lemlib::Chassis::tank(left, right);
         pros::delay(10);
     } while(pros::competition::get_status() == compState && !pid.settled());
     drivetrain.leftMotors->move(0);
@@ -288,7 +285,7 @@ void lemlib::Chassis::turnAngle(double angle, double speed, double timeout, bool
     do{
         double angleDiff = -rescale180(angle - startTheta);
         double stepVal = pid.update(angleDiff, imu.get_heading());
-        lemlib::Chassis::arcade(0, (stepVal/100)*127);
+        lemlib::Chassis::arcade(0, stepVal);
         pros::delay(10);
     } while(pros::competition::get_status() == compState && !pid.settled());
     drivetrain.leftMotors->move(0);
