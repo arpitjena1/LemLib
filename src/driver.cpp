@@ -77,7 +77,7 @@ void driver(){
         bool inRange;
         while(1){
             //tank control
-            chassis.tank(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y )+ baseTurnBias, master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)-baseTurnBias);
+            chassis.tank(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y )+ ((baseTurnBias/100)*127), master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)-((baseTurnBias/100)*127));
 
             //vision task
             monitorVisionTask();
