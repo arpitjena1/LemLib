@@ -412,8 +412,8 @@ void lemlib::Chassis::moveTo(float x, float y, float theta, int timeout, bool as
     // give the mutex back
     mutex.give();
 }
-void lemlib::Chassis::moveToC(float x, float y, float theta, float exitErrorPerPoint, int timeout, bool async, bool forwards, float chasePower,
-                             float lead, float maxSpeed, bool islastPose, bool log){
+void lemlib::Chassis::moveToC(float x, float y, float theta, bool islastPose, float exitErrorPerPoint, int timeout, bool async, bool forwards, float chasePower,
+                             float lead, float maxSpeed, bool log){
     if (!mutex.take(10)) return;
     // if the function is async, run it in a new task
     if (async) {

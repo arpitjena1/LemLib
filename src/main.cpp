@@ -1,5 +1,6 @@
 #include "main.h"
 #include "lemlib/api.hpp"
+#include "lemlib/chassis/chassis.hpp"
 
 
 
@@ -61,9 +62,15 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-    chassis.moveTo(20, 15, 90, 4000); 
-    chassis.swingTo(80, 0, 1);
+    
+
+    
+    chassis.swingTo(90, 0, 1);
+    chassis.swingTo(-90, 0, 1);
     chassis.turnAngle(90, 127, 3000, false);
+    chassis.turnAngle(-90, 127, 3000, false);
+    chassis.moveToC(10, 10, 45, false);
+    chassis.moveToC(-10, -10, -45, true);
 }
 
 /**

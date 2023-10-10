@@ -251,8 +251,8 @@ class Chassis {
          * @param curveGain control how steep the drive curve is. The larger the number, the steeper the curve. A value
          * of 0 disables the curve entirely.
          */
-        void moveToC(float x, float y, float theta, float exitErrorPerPoint, int timeout, bool async, bool forwards, float chasePower,
-                             float lead, float maxSpeed, bool isLastPose, bool log);
+        void moveToC(float x, float y, float theta,bool isLastPose, float exitErrorPerPoint = 1, int timeout=3000, bool async=false, bool forwards=true, float chasePower=0,
+                             float lead=0.6, float maxSpeed=127, bool log=false);
         void cMtp(std::vector<Pose> poses, double exitErrorPerPoint, double timeoutPerPoint,bool async);
 
         void tank(int left, int right, float curveGain = 0.0);
