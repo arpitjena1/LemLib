@@ -50,3 +50,4 @@ pros::ADIDigitalOut brwing('D');
 pros::ADIDigitalOut intakepist('F');
 pros::ADIDigitalOut frontwings('A');
 pros::ADIDigitalOut lift('A');
+pros::Vision vision(2);

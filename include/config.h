@@ -20,3 +20,4 @@ extern pros::ADIDigitalOut intakepist;
 extern pros::MotorGroup intake;
 extern pros::Controller master;
 extern pros::Distance dist;
+extern pros::Vision vision;

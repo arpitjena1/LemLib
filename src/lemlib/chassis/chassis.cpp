@@ -502,7 +502,7 @@ void lemlib::Chassis::moveToC(float x, float y, float theta, bool islastPose, fl
     }
     } else{
         
-        while (pros::competition::get_status() == compState && (pros::millis() - start < 300)) {
+        while (pros::competition::get_status() == compState && (pros::millis() - start < timeout)) {
         // get current pose
         Pose pose = getPose(true);
         if (!forwards) pose.theta += M_PI;
@@ -512,15 +512,15 @@ void lemlib::Chassis::moveToC(float x, float y, float theta, bool islastPose, fl
         distTravelled += pose.distance(lastPose);
         lastPose = pose;
 
-        // check if the robot is close enough to the target to start settling
+        // check if the robot is close enough to the target to start settling-ONLY FOR ANGULAR
         if (pose.distance(target) < 7.5 && close == false) {
             close = true;
-            maxSpeed = fmax(fabs(prevLinearPower), 30);
+            maxSpeed = 127;
         }
 
         // calculate the carrot point
         Pose carrot = target - (Pose(cos(target.theta), sin(target.theta)) * lead * pose.distance(target));
-        if (close) carrot = target; // settling behavior
+        //if (close) carrot = target; // settling behavior
 
         // calculate error
         float angularError = angleError(pose.angle(carrot), pose.theta, true); // angular error
@@ -530,7 +530,9 @@ void lemlib::Chassis::moveToC(float x, float y, float theta, bool islastPose, fl
 
         // get PID outputs
         float angularPower = -angularPID.update(radToDeg(angularError), 0, log);
-        float linearPower = linearPID.update(linearError, 0, log);
+       // float linearPower = (linearError /10) * 127;
+        float linearPower = 127;
+
 
         // calculate radius of turn
         float curvature = fabs(getCurvature(pose, carrot));
